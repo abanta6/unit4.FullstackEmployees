@@ -2,7 +2,13 @@ import express from "express";
 const router = express.Router();
 export default router;
 
-import { createEmployee, getEmployee } from "#db/queries/employees";
+import {
+  createEmployee,
+  deleteEmployee,
+  getEmployee,
+  getEmployees,
+  updateEmployee,
+} from "#db/queries/employees";
 
 router
   .route("/")
@@ -34,3 +40,31 @@ router.param("id", async (req, res, next, id) => {
   req.employee = employee;
   next();
 });
+
+router
+  .route("/:id")
+  .get((req, res) => {
+    res.send(req.employee);
+  })
+  .delete(async (req, res) => {
+    await deleteEmployee(req.employee.id);
+    res.sendStatus(204);
+  })
+  .put(async (req, res) => {
+    if (!req.body) return res.status(400).send("Request body required.");
+
+    const { name, birthday, salary } = req.body;
+    if (!name || !birthday || !salary) {
+      return res
+        .status(400)
+        .send("Missing required fields: name, birthday, salary");
+    }
+
+    const employee = await updateEmployee({
+      id: req.employee.id,
+      name,
+      birthday,
+      salary,
+    });
+    res.send(employee);
+  });
